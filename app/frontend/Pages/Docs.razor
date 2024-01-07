@@ -17,20 +17,28 @@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudText Class="pb-4">
-                        Select up to ten PDF documents to upload, or explore the existing documents that have already been processed.
+                        Select up to ten documents to upload, or explore the existing documents that have already been processed.
                         Each file cannot exceed a file size of @(MaxIndividualFileSize.ToHumanReadableSize())
                     </MudText>
                     <MudFileUpload @ref="_fileUpload" T="IReadOnlyList<IBrowserFile>"
-                                   Accept=".pdf" MaximumFileCount="10" FilesChanged=@(files => StateHasChanged())
-                                   Required="true" RequiredError="You must select at least one PDF file to upload.">
+                                   MaximumFileCount="10" FilesChanged=@(files => StateHasChanged())
+                                   Required="true" RequiredError="You must select at least one file to upload.">
                         <ButtonTemplate>
-                            <MudButton HtmlTag="label"
-                                       Variant="Variant.Filled"
-                                       StartIcon="@Icons.Material.Filled.FileOpen"
-                                       Size="Size.Large"
-                                       for="@context">
-                                Select PDF Documents
-                            </MudButton>
+                            <div style="display: flex;">
+                                <MudButton HtmlTag="label"
+                                           Variant="Variant.Filled"
+                                           StartIcon="@Icons.Material.Filled.FileOpen"
+                                           Size="Size.Large"
+                                           for="@context">
+                                    Select Documents
+                                </MudButton>
+                                @if (_showLoading)
+                                {
+                                    <div class="ml-5">
+                                        <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+                                    </div>
+                                }
+                            </div>
                         </ButtonTemplate>
                         <SelectedTemplate>
                             <MudExpansionPanels Class="pt-4" Elevation=2>
@@ -50,7 +58,7 @@
                                             }
                                             else
                                             {
-                                                <MudText>No PDF files selected.</MudText>
+                                                <MudText>No files selected.</MudText>
                                             }
                                         </div>
                                     </TitleContent>
@@ -147,20 +155,20 @@
                             Size="Size.Small" OnClick="@(() => OnShowDocument(context))" />
                 </MudTd>
                 <MudTd DataLabel="Status" Style="text-align:center">
-                @{
-                    switch (context.Status)
-                    {
-                        case DocumentProcessingStatus.Failed:
-                            <MudIcon Color="Color.Error" Icon="@Icons.Material.Filled.Close" />
-                            break;
-                        case DocumentProcessingStatus.Succeeded:
-                            <MudIcon Color="Color.Success" Icon="@Icons.Material.Filled.Check" />
-                            break;
-                        default:
-                            <MudIcon Color="Color.Warning" Icon="@Icons.Material.Filled.QuestionMark" />
-                            break;
+                    @{
+                        switch (context.Status)
+                        {
+                            case DocumentProcessingStatus.Failed:
+                                <MudIcon Color="Color.Error" Icon="@Icons.Material.Filled.Close" />
+                                break;
+                            case DocumentProcessingStatus.Succeeded:
+                                <MudIcon Color="Color.Success" Icon="@Icons.Material.Filled.Check" />
+                                break;
+                            default:
+                                <MudIcon Color="Color.Warning" Icon="@Icons.Material.Filled.QuestionMark" />
+                                break;
+                        }
                     }
-                }
                 </MudTd>
                 <MudTd DataLabel="Name">
                     <strong>@context.Name</strong>
@@ -188,3 +196,4 @@
         <MudFab Color="Color.Primary" IconSize="Size.Large" StartIcon="@Icons.Material.Filled.ArrowUpward" />
     </MudScrollToTop>
 </MudGrid>
+

@@ -32,6 +32,7 @@ public sealed partial class Docs : IDisposable
     public required IJSRuntime JSRuntime { get; set; }
 
     private bool FilesSelected => _fileUpload is { Files.Count: > 0 };
+    private bool _showLoading = false;
 
     protected override void OnInitialized() =>
         // Instead of awaiting this async enumerable here, let's capture it in a task
@@ -47,13 +48,18 @@ public sealed partial class Docs : IDisposable
 
         try
         {
+            _documents.Clear();
             var documents =
                 await Client.GetDocumentsAsync(_cancellationTokenSource.Token)
                     .ToListAsync();
 
-            foreach (var document in documents)
+            if (documents != null && documents.Any())
             {
-                _documents.Add(document);
+                documents = documents.OrderByDescending(n => n.LastModified).ToList();
+                foreach (var document in documents)
+                {
+                    _documents.Add(document);
+                }
             }
         }
         finally
@@ -67,6 +73,7 @@ public sealed partial class Docs : IDisposable
     {
         if (_fileUpload is { Files.Count: > 0 })
         {
+            _showLoading = true;
             var cookie = await JSRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
 
             var result = await Client.UploadDocumentsAsync(
@@ -86,6 +93,7 @@ public sealed partial class Docs : IDisposable
                     });
 
                 await _fileUpload.ResetAsync();
+                await GetDocumentsAsync();
             }
             else
             {
@@ -98,6 +106,7 @@ public sealed partial class Docs : IDisposable
                         options.VisibleStateDuration = 10_000;
                     });
             }
+            _showLoading = false;
         }
     }
 

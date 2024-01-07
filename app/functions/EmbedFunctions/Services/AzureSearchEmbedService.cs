@@ -73,7 +73,7 @@ public sealed partial class AzureSearchEmbedService(
                 new SearchableField("content") { AnalyzerName = LexicalAnalyzerName.EnMicrosoft },
                 new SimpleField("category", SearchFieldDataType.String) { IsFacetable = true },
                 new SimpleField("sourcepage", SearchFieldDataType.String) { IsFacetable = true },
-                new SimpleField("sourcefile", SearchFieldDataType.String) { IsFacetable = true },
+                new SimpleField("sourcefile", SearchFieldDataType.String) { IsFacetable = true, IsFilterable = true },
                 new SearchField("embedding", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                 {
                     VectorSearchDimensions = 1536,
@@ -319,7 +319,7 @@ public sealed partial class AzureSearchEmbedService(
                 Id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
                 Content: sectionText,
                 SourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
-                SourceFile: blobName);
+                SourceFile: GetSourceFile(blobName));
 
             var lastTableStart = sectionText.LastIndexOf("<table", StringComparison.Ordinal);
             if (lastTableStart > 2 * SentenceSearchLimit && lastTableStart > sectionText.LastIndexOf("</table", StringComparison.Ordinal))
@@ -352,7 +352,7 @@ public sealed partial class AzureSearchEmbedService(
                 Id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
                 Content: allText[start..end],
                 SourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
-                SourceFile: blobName);
+                SourceFile: GetSourceFile(blobName));
         }
     }
 
@@ -371,6 +371,27 @@ public sealed partial class AzureSearchEmbedService(
     }
 
     private static string BlobNameFromFilePage(string blobName, int page = 0) => blobName;
+
+    private static string GetSourceFile(string blobName)
+    {
+        var lastHyphenIndex = blobName.LastIndexOf('-');
+        if (lastHyphenIndex == -1)
+        {
+            return blobName;
+        }
+        var lastDotIndex = blobName.LastIndexOf('.');
+        if (lastDotIndex == -1)
+        {
+            return blobName;
+        }
+        var page = blobName.Substring(lastHyphenIndex + 1, lastDotIndex - lastHyphenIndex - 1);
+        if (!int.TryParse(page, out int _))
+        {
+            return blobName;
+        }
+        var sourceFile = blobName.Replace($"-{page}", "");
+        return sourceFile;
+    }
 
     private async Task IndexSectionsAsync(string searchIndexName, IEnumerable<Section> sections, string blobName)
     {

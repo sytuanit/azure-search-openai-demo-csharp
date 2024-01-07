@@ -5,6 +5,7 @@ namespace ClientApp.Pages;
 public sealed partial class Chat
 {
     private string _userQuestion = "";
+    private string? _sourceFile = null;
     private UserQuestion _currentQuestion;
     private string _lastReferenceQuestion = "";
     private bool _isReceivingResponse = false;
@@ -48,6 +49,7 @@ public sealed partial class Chat
 
             history.Add(new ChatTurn(_userQuestion));
 
+            Settings.Overrides.SourceFile = string.IsNullOrEmpty(_sourceFile?.Trim()) ? null : _sourceFile?.Trim();
             var request = new ChatRequest([.. history], Settings.Approach, Settings.Overrides);
             var result = await ApiClient.ChatConversationAsync(request);
 

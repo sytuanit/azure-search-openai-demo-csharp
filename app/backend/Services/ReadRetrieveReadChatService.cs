@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Azure;
+
 namespace MinimalApi.Services;
 
 public class ReadRetrieveReadChatService
@@ -38,7 +40,6 @@ public class ReadRetrieveReadChatService
         var useSemanticCaptions = overrides?.SemanticCaptions ?? false;
         var useSemanticRanker = overrides?.SemanticRanker ?? false;
         var excludeCategory = overrides?.ExcludeCategory ?? null;
-        var filter = excludeCategory is null ? null : $"category ne '{excludeCategory}'";
         IChatCompletion chat = _kernel.GetService<IChatCompletion>();
         ITextEmbeddingGeneration? embedding = _kernel.GetService<ITextEmbeddingGeneration>();
         float[]? embeddings = null;
@@ -83,6 +84,11 @@ standard plan AND dental AND employee benefit.
         if (documentContentList.Length == 0)
         {
             documentContents = "no source available.";
+            return new ApproachResponse(
+               DataPoints: documentContentList,
+               Answer: documentContents,
+               Thoughts: null,
+               CitationBaseUrl: _configuration.ToCitationBaseUrl());
         }
         else
         {
